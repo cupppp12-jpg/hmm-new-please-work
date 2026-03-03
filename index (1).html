@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Western Vs Korea culture</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&display=swap');
+
+        :root {
+            --app-bg: #0a192f;
+            --text-main: #ffffff;
+            --timer-urgent: #ff4757;
+            --correct-flash: #2ecc71;
+            --wrong-flash: #e74c3c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--app-bg);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Perfectly centers the stack vertically */
+            justify-content: center; 
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+            overscroll-behavior-y: contain; 
+            touch-action: none;
+        }
+
+        #timer-display {
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            margin: 0 0 30px 0;
+            padding: 0 20px;
+            opacity: 0.9;
+        }
+
+        .stack-container {
+            position: relative;
+            width: 85vw;
+            max-width: 400px;
+            height: 50vh; /* Adjusted for better mobile centering */
+            perspective: 1000px; 
+        }
+
+        .card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            display: flex;
+            /* Centers the text inside the card */
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            font-size: 1.25rem; 
+            font-weight: 400;
+            line-height: 1.5;
+            cursor: grab;
+            touch-action: none; 
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            border: 2px solid rgba(255, 255, 255, 0.1); 
+            color: #1a1a1a; 
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s, border-color 0.3s;
+        }
+
+        .card.active {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            z-index: 10;
+        }
+
+        .card.next {
+            opacity: 0.4;
+            transform: scale(0.95) translateY(15px);
+            filter: blur(1px);
+            z-index: 5;
+        }
+
+        .swipe-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: #000000;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .card-footer {
+            margin-top: 40px;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+        }
+
+        #results {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        #results h2 { font-size: 3.5rem; margin: 10px 0; font-weight: 300; }
+
+        #meme-container {
+            margin-top: 20px;
+            width: 80vw;
+            max-width: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            display: none;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            background: white;
+        }
+
+        #meme-container img { 
+            width: 100%; 
+            height: auto; 
+            display: block;
+            image-rendering: -webkit-optimize-contrast; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-view" style="display: contents;">
+        <div id="timer-display">02:00</div>
+        <h1>Western Vs Korea culture</h1>
+        <div class="stack-container" id="stack"></div>
+        <div class="card-footer" id="counter">Card 1 / 20</div>
+    </div>
+
+    <div id="results">
+        <p style="letter-spacing: 3px; opacity: 0.6; font-size: 0.8rem;">YOU ARE</p>
+        <h2 id="final-score">0 / 20</h2>
+        <div id="meme-container"></div>
+    </div>
+
+    <script>
+        const cardsData = [
+            { t: "Direct feedback: People say exactly what they mean.", s: "left" },
+            { t: "Individual initiative and achievements are rewarded.", s: "left" },
+            { t: "Sense the 'vibe' and unspoken expectations.", s: "right" },
+            { t: "Team dining and drinking are signs of loyalty.", s: "right" },
+            { t: "Entry-level employees can disagree with senior execs.", s: "left" },
+            { t: "Addressing colleagues by job rank (e.g. 'Manager...', 'Director...').", s: "right" },
+            { t: "Work-life balance: Prioritizing personal time after 5 PM.", s: "left" },
+            { t: "Pressure to stay in the office until the boss leaves.", s: "right" },
+            { t: "The group's needs are prioritized over individual desires.", s: "right" },
+            { t: "Work and personal life are blurred; colleagues are the primary social circle.", s: "right" },
+            { t: "Maintaining a positive collective 'mood.' Avoid causing embarrassment to keep office harmony.", s: "right" },
+            { t: "Employees often feel a deep sense of belonging and identity tied to their specific company.", s: "right" },
+            { t: "Conglomerates hire entire classes of graduates at once through standardized testing.", s: "right" },
+            { t: "Employees are expected to 'advocate for themselves' and articulate their value during reviews.", s: "left" },
+            { t: "Professionals are encouraged to change companies every few years to gain diverse experience.", s: "left" },
+            { t: "Business relationships are governed by detailed, rigid contracts anticipating most conflicts.", s: "left" },
+            { t: "Unspoken pressure to stay in the office until the most senior person leaves, regardless of workload.", s: "right" },
+            { t: "Criticism is rarely direct. Managers may use metaphors or subtle hints to correct behavior.", s: "right" },
+            { t: "Modern workplaces place a high premium on diversity, equity, and inclusion (DEI) initiatives.", s: "left" },
+            { t: "'Time is money.' Meetings are expected to start and end exactly at the scheduled time.", s: "left" }
+        ];
+
+        const perfectMemes = ["https://thumbs2.imgbox.com/08/78/I0eaKRA0_t.jpg", "https://thumbs2.imgbox.com/ed/af/jGF71ZFC_t.jpeg"];
+        const winHighMemes = ["https://thumbs2.imgbox.com/38/d3/TCA6h3aN_t.jpg", "https://thumbs2.imgbox.com/17/ba/IpCyOEJ7_t.jpg", "https://thumbs2.imgbox.com/5c/a1/RsHoYoXL_t.jpg", "https://thumbs2.imgbox.com/81/dc/O19fUgSS_t.jpeg"];
+        const winMidMemes = ["https://thumbs2.imgbox.com/22/89/z4O46yQU_t.jpg", "https://thumbs2.imgbox.com/f3/10/6Jqe1Bpv_t.jpg", "https://thumbs2.imgbox.com/cd/79/hVdy7Hfc_t.jpg", "https://thumbs2.imgbox.com/c1/63/IcjSxciT_t.jpg"];
+        const loseMemes = ["https://thumbs2.imgbox.com/35/54/Qd8MJmud_t.jpeg", "https://thumbs2.imgbox.com/a5/55/GJO7YRu6_t.jpeg", "https://thumbs2.imgbox.com/9c/d6/Yg35Ch3h_t.jpeg", "https://thumbs2.imgbox.com/4b/64/Xy2lNcDX_t.jpg"];
+        const criticalLoseMemes = ["https://thumbs2.imgbox.com/fc/c4/0jKVk0pi_t.jpeg", "https://thumbs2.imgbox.com/a0/e6/nlEbBf6D_t.jpeg", "https://thumbs2.imgbox.com/42/69/2WiixmUi_t.jpeg", "https://thumbs2.imgbox.com/33/50/wE30r8H0_t.jpg", "https://thumbs2.imgbox.com/52/99/A2dEWwqZ_t.png"];
+
+        [...perfectMemes, ...winHighMemes, ...winMidMemes, ...loseMemes, ...criticalLoseMemes].forEach(src => (new Image()).src = src);
+
+        const pastelColors = ['#E0F2F1', '#E3F2FD', '#FCE4EC', '#F3E5F5', '#FFF3E0', '#F1F8E9'];
+        function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+        const shuffledDeck = shuffle([...cardsData]);
+        const stackContainer = document.getElementById('stack');
+        let corrects = 0, swiped = 0, timeLeft = 120, timerStarted = false, timerInterval;
+
+        function updateStackVisuals() {
+            const cards = Array.from(stackContainer.children);
+            cards.forEach((c, i) => {
+                c.classList.remove('active', 'next');
+                if (i === cards.length - 1) c.classList.add('active');
+                else if (i === cards.length - 2) c.classList.add('next');
+            });
+        }
+
+        function startTimer() {
+            if (timerStarted) return;
+            timerStarted = true;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const mins = Math.floor(timeLeft / 60), secs = timeLeft % 60;
+                document.getElementById('timer-display').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                if (timeLeft <= 0) endGame(true);
+            }, 1000);
+        }
+
+        function endGame(isTimeout = false) {
+            clearInterval(timerInterval);
+            document.getElementById('game-view').style.display = 'none';
+            document.getElementById('results').style.display = 'flex';
+            document.getElementById('final-score').innerText = `${corrects} / ${shuffledDeck.length}`;
+            const container = document.getElementById('meme-container');
+            let pool;
+            if (isTimeout || corrects <= 5) pool = criticalLoseMemes;
+            else if (corrects === 20) pool = perfectMemes;
+            else if (corrects >= 17) pool = winHighMemes;
+            else if (corrects >= 12) pool = winMidMemes;
+            else pool = loseMemes;
+            container.innerHTML = `<img src="${pool[Math.floor(Math.random() * pool.length)]}">`;
+            container.style.display = 'block';
+        }
+
+        function createCard(data, isInstruction = false) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            if (isInstruction) {
+                card.style.backgroundColor = "#ffffff";
+                card.innerHTML = `<div class="instruction-text">Swipe LEFT for Western culture<br><br>Swipe RIGHT for Korean culture</div>`;
+            } else {
+                card.style.backgroundColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
+                card.dataset.originalColor = card.style.backgroundColor;
+                card.innerText = data.t;
+            }
+
+            const label = document.createElement('div');
+            label.className = 'swipe-label';
+            card.appendChild(label);
+            
+            let startX = 0, startTime = 0, moveX = 0, isDragging = false;
+
+            const onStart = (e) => {
+                if (!card.classList.contains('active')) return;
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                startTime = Date.now();
+                card.style.transition = 'none';
+            };
+
+            const onMove = (e) => {
+                if (!isDragging) return;
+                moveX = (e.type.includes('mouse') ? e.clientX : e.touches[0].clientX) - startX;
+                card.style.transform = `translateX(${moveX}px) rotate(${moveX / 20}deg)`;
+                
+                if (Math.abs(moveX) > 40) {
+                    label.innerText = isInstruction ? (moveX < 0 ? "START" : "시작") : (moveX < 0 ? "WESTERN" : "KOREAN");
+                    label.style.opacity = Math.min(Math.abs(moveX) / 100, 1);
+                    if (isInstruction) card.querySelector('.instruction-text').style.opacity = '0';
+                    else card.style.color = "transparent";
+                }
+            };
+
+            const onEnd = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const duration = Date.now() - startTime;
+                const velocity = Math.abs(moveX) / duration;
+
+                if (Math.abs(moveX) > 100 || velocity > 0.8) {
+                    if (!isInstruction) {
+                        const side = moveX > 0 ? 'right' : 'left';
+                        const isCorrect = side === data.s;
+                        if (isCorrect) corrects++;
+                        card.style.borderColor = isCorrect ? 'var(--correct-flash)' : 'var(--wrong-flash)';
+                        card.style.borderWidth = '6px';
+                    } else startTimer();
+
+                    card.style.transition = 'transform 0.4s ease-in, opacity 0.4s';
+                    card.style.transform = `translateX(${moveX * 5}px) rotate(${moveX / 5}deg)`;
+                    card.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        card.remove();
+                        if (!isInstruction) {
+                            swiped++;
+                            document.getElementById('counter').innerText = `Card ${swiped + 1} / ${shuffledDeck.length}`;
+                        }
+                        updateStackVisuals();
+                        if (!isInstruction && swiped === shuffledDeck.length) endGame();
+                    }, 300);
+                } else {
+                    card.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s';
+                    card.style.transform = 'translateX(0) rotate(0)';
+                    label.style.opacity = '0';
+                    card.style.color = "#1a1a1a";
+                    if (isInstruction) card.querySelector('.instruction-text').style.opacity = '1';
+                }
+            };
+
+            card.addEventListener('mousedown', onStart);
+            card.addEventListener('touchstart', onStart, {passive: true});
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, {passive: false});
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchend', onEnd);
+            return card;
+        }
+
+        shuffledDeck.forEach(c => stackContainer.appendChild(createCard(c)));
+        stackContainer.appendChild(createCard(null, true));
+        updateStackVisuals();
+    </script>
+</body>
+</html>
