@@ -257,7 +257,8 @@
             card.className = 'card';
             if (isInstruction) {
                 card.style.backgroundColor = "#ffffff";
-                card.innerHTML = `<div class="instruction-text">Swipe LEFT for Western culture<br><br>Swipe RIGHT for Korean culture</div>`;
+                // UPDATED INSTRUCTION TEXT
+                card.innerHTML = `<div class="instruction-text">swipe LEFT if it's Western culture<br><br>swipe RIGHT if it's Korean culture</div>`;
             } else {
                 card.style.backgroundColor = pastelColors[Math.floor(Math.random() * pastelColors.length)];
                 card.dataset.originalColor = card.style.backgroundColor;
